@@ -14,9 +14,8 @@ public class testOne {
 				}
 			}
 		}
-		//for(int i=0;i<arr.length;i++)
-		//System.out.print(arr[i] +" ");
-		int countZero = 0; // count the number of zeros in array
+		
+		int countZero = 0; //Count the number of zeros in array
 		for(int i = 0; i < arr.length; i++){
 			if(arr[i]  == 0){
 				countZero++;
