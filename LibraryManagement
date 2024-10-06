@@ -1,0 +1,145 @@
+import java.sql.*;
+import java.util.Scanner;
+
+public class LibraryManagement {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/library";
+    private static final String USER = "root";  
+    private static final String PASSWORD = "K@ushik29"; 
+
+    public static void main(String[] args) {
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+             Scanner scanner = new Scanner(System.in)) {
+
+         
+            createTableIfNotExists(connection);
+            
+            while (true) {
+                System.out.println("\nEnter a command (1:Enter Book Details, 2: Search Books): ");
+                int selectCommand = scanner.nextInt();
+                scanner.nextLine();
+                switch(selectCommand) {
+                case 1:
+                
+            
+            for (int i = 0; i < 3; i++) {
+                System.out.println("Enter details for book " + (i + 1));
+                System.out.print("Book Name: ");
+                String bookName = scanner.nextLine();
+                System.out.print("Author: ");
+                String author = scanner.nextLine();
+                System.out.print("Publication: ");
+                String publication = scanner.nextLine();
+                System.out.print("Price: ");
+                double price = scanner.nextDouble();
+                scanner.nextLine(); // Consume newline
+                System.out.print("Genre: ");
+                String genre = scanner.nextLine();
+
+                insertBook(connection, bookName, author, publication, price, genre);
+            }
+                case 2:
+            
+            while (true) {
+                System.out.println("\nEnter a command (1: List by Author, 2: Price of Book, 3: List by Genre, 0: Exit): ");
+                int command = scanner.nextInt();
+                scanner.nextLine(); 
+                if (command == 0) {
+                    break;
+                }
+
+                switch (command) {
+                    case 1:
+                        System.out.print("Enter author name: ");
+                        String author = scanner.nextLine();
+                        fetchBooksByAuthor(connection, author);
+                        break;
+                    case 2:
+                        System.out.print("Enter book name: ");
+                        String bookName = scanner.nextLine();
+                        fetchBookPrice(connection, bookName);
+                        break;
+                    case 3:
+                        System.out.print("Enter genre: ");
+                        String genre = scanner.nextLine();
+                        fetchBooksByGenre(connection, genre);
+                        break;
+                    default:
+                        System.out.println("Invalid command!");
+                }
+            }
+            }
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createTableIfNotExists(Connection connection) throws SQLException {
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS books (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "book_name VARCHAR(255) NOT NULL, " +
+                "author VARCHAR(255) NOT NULL, " +
+                "publication VARCHAR(255), " +
+                "price DECIMAL(10, 2), " +
+                "genre VARCHAR(255))";
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(createTableSQL);
+        }
+    }
+
+    private static void insertBook(Connection connection, String bookName, String author, String publication, double price, String genre) throws SQLException {
+        String insertSQL = "INSERT INTO books (book_name, author, publication, price, genre) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            preparedStatement.setString(1, bookName);
+            preparedStatement.setString(2, author);
+            preparedStatement.setString(3, publication);
+            preparedStatement.setDouble(4, price);
+            preparedStatement.setString(5, genre);
+            preparedStatement.executeUpdate();
+        }
+    }
+
+    private static void fetchBooksByAuthor(Connection connection, String author) throws SQLException {
+        String selectSQL = "SELECT * FROM books WHERE author = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectSQL)) {
+            preparedStatement.setString(1, author);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            System.out.println("Books by " + author + ":");
+            while (resultSet.next()) {
+                System.out.println("Book Name: " + resultSet.getString("book_name") +
+                                   ", Publication: " + resultSet.getString("publication") +
+                                   ", Price: " + resultSet.getDouble("price") +
+                                   ", Genre: " + resultSet.getString("genre"));
+            }
+        }
+    }
+
+    private static void fetchBookPrice(Connection connection, String bookName) throws SQLException {
+        String selectSQL = "SELECT price FROM books WHERE book_name = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectSQL)) {
+            preparedStatement.setString(1, bookName);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                System.out.println("Price of " + bookName + ": " + resultSet.getDouble("price"));
+            } else {
+                System.out.println("Book not found!");
+            }
+        }
+    }
+
+    private static void fetchBooksByGenre(Connection connection, String genre) throws SQLException {
+        String selectSQL = "SELECT * FROM books WHERE genre = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(selectSQL)) {
+            preparedStatement.setString(1, genre);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            System.out.println("Books in " + genre + " genre:");
+            while (resultSet.next()) {
+                System.out.println("Book Name: " + resultSet.getString("book_name") +
+                                   ", Author: " + resultSet.getString("author") +
+                                   ", Publication: " + resultSet.getString("publication") +
+                                   ", Price: " + resultSet.getDouble("price"));
+            }
+        }
+    }
+}
